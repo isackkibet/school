@@ -1,0 +1,126 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum UserStatus { PROSPECT APPLICANT ADMITTED ACTIVE SUSPENDED GRADUATED ALUMNI }
+enum ModeOfStudy { PHYSICAL LIVE_VIRTUAL AI_VIRTUAL HYBRID }
+enum SystemCode { WEBSITE SMART_PROSPECTUS ICS_LIVE SMART_LECTURER AI_ELIBRARY YOHPAL_BRAIN YOHPAL_JOBS YOHPAL_HUSTLE }
+enum TranscriptItemType { UNIT CAT ASSIGNMENT PRACTICAL EXAM ATTACHMENT PROJECT GRADUATION }
+
+model User {
+  id String @id @default(uuid())
+  icsId String @unique
+  email String? @unique
+  phone String? @unique
+  passwordHash String?
+  status UserStatus @default(PROSPECT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  profile StudentProfile?
+  roles UserRole[]
+  refreshTokens RefreshToken[]
+  transcripts TranscriptItem[]
+  competencies CompetencyPassportItem[]
+  auditLogs AuditLog[]
+}
+
+model StudentProfile {
+  id String @id @default(uuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
+  fullName String
+  nationalId String?
+  admissionNumber String? @unique
+  courseOfferingId String?
+  courseName String?
+  level String?
+  campus String?
+  modeOfStudy ModeOfStudy?
+  sponsorName String?
+  sponsorPhone String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Role { id String @id @default(uuid()) name String @unique description String? users UserRole[] permissions RolePermission[] }
+model Permission { id String @id @default(uuid()) code String @unique description String? roles RolePermission[] }
+model UserRole { userId String roleId String user User @relation(fields:[userId], references:[id]) role Role @relation(fields:[roleId], references:[id]) @@id([userId,roleId]) }
+model RolePermission { roleId String permissionId String role Role @relation(fields:[roleId], references:[id]) permission Permission @relation(fields:[permissionId], references:[id]) @@id([roleId,permissionId]) }
+
+model RefreshToken { id String @id @default(uuid()) userId String user User @relation(fields:[userId], references:[id]) tokenHash String expiresAt DateTime revokedAt DateTime? createdAt DateTime @default(now()) }
+
+model SystemAccess {
+  id String @id @default(uuid())
+  userId String
+  system SystemCode
+  enabled Boolean @default(true)
+  reason String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@unique([userId, system])
+}
+
+model NavigationTile {
+  id String @id @default(uuid())
+  code String @unique
+  title String
+  system SystemCode
+  routePath String
+  icon String?
+  minRole String?
+  displayOrder Int @default(0)
+  isActive Boolean @default(true)
+}
+
+model TranscriptItem {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  type TranscriptItemType
+  courseOfferingId String?
+  unitName String?
+  title String
+  score Decimal?
+  grade String?
+  status String
+  evidenceUrl String?
+  issuedAt DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+}
+
+model CompetencyPassportItem {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields:[userId], references:[id])
+  category String
+  skillName String
+  level String
+  evidenceUrl String?
+  verifiedBy String?
+  verifiedAt DateTime?
+  metadata Json?
+  createdAt DateTime @default(now())
+}
+
+model GraduateHandoff {
+  id String @id @default(uuid())
+  userId String
+  target SystemCode
+  payload Json
+  status String @default("PENDING")
+  response Json?
+  createdAt DateTime @default(now())
+  completedAt DateTime?
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+  actorUserId String?
+  actor User? @relation(fields:[actorUserId], references:[id])
+  action String
+  entity String
+  entityId String?
+  metadata Json?
+  createdAt DateTime @default(now())
+}

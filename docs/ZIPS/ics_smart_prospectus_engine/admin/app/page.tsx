@@ -1,0 +1,1 @@
+export default function AdminHome(){return <main style={{padding:32,fontFamily:'sans-serif'}}><h1>ICS Smart Prospectus Admin</h1><p>Manage schools, courses, fees, admission rules, practical tools and e-library mappings.</p><ul><li>Course Catalog</li><li>Fee Rules</li><li>Eligibility Rules</li><li>Practical Tool Checklists</li></ul></main>}

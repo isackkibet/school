@@ -1,0 +1,2 @@
+import { Controller, Get, Param } from '@nestjs/common'; import { PrismaService } from '../prisma/prisma.service';
+@Controller('courses') export class CoursesController{constructor(private prisma:PrismaService){} @Get() all(){return this.prisma.course.findMany({include:{school:true,offerings:{include:{examBody:true}}}})} @Get(':id') one(@Param('id') id:string){return this.prisma.course.findUnique({where:{id},include:{school:true,offerings:{include:{examBody:true}}}})}}
